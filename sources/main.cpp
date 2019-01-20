@@ -24,6 +24,7 @@ written permission of Adobe.
 #include "llvm/Support/CommandLine.h"
 
 // application
+#include "include_paths.hpp"
 #include "json.hpp"
 #include "output_yaml.hpp"
 
@@ -275,8 +276,7 @@ std::vector<std::string> integrate_hyde_config(int argc, const char** argv) {
     std::tie(config_dir, config) =
         load_hyde_config(cli_hyde_flags.empty() ? "" : cli_hyde_flags.back());
 
-    if (exists(config_dir))
-        current_path(config_dir);
+    if (exists(config_dir)) current_path(config_dir);
 
     if (config.count("clang_flags")) {
         for (const auto& clang_flag : config["clang_flags"]) {
@@ -359,22 +359,8 @@ int main(int argc, const char** argv) try {
     hyde::TypedefInfo typedef_matcher(options);
     Finder.addMatcher(hyde::TypedefInfo::GetMatcher(), &typedef_matcher);
 
-    // Get the current Xcode toolchain and add its include directories to the tool.
-    const boost::filesystem::path xcode_path = get_xcode_path();
-
-    // Order matters here. The first include path will be looked up first, so should
-    // be the highest priority path.
-    boost::filesystem::path include_directories[] = {
-        clang_path(xcode_path),
-        "/Library/Developer/CommandLineTools/usr/include/c++/v1",
-        xcode_path / "/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/",
-    };
-
-    for (const auto& include : include_directories) {
-        if (ToolDiagnostic == ToolDiagnosticVerbose)
-            std::cout << "Including: " << include.string() << '\n';
-        Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(("-I" + include.string()).c_str()));
-    }
+    Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(hyde::clang_internal_include_path));
+    Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(hyde::clang_include_path));
 
     // Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-xc++"));
     // Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-std=c++17"));

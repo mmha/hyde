@@ -1,0 +1,6 @@
+#pragma once
+
+namespace hyde {
+    constexpr inline char clang_internal_include_path[] = "-isystem@HYDE_CLANG_INTERNAL_INCLUDE_PATH@";
+	constexpr inline char clang_include_path[] = "-I@HYDE_CLANG_INCLUDE_PATH@";
+}

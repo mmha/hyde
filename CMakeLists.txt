@@ -25,13 +25,23 @@ file(GLOB EMITTER_FILES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/emitters/*
 file(GLOB MATCHER_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/matchers/*.cpp)
 file(GLOB SRC_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/sources/*.cpp)
 
+set(llvm_version "${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}.${LLVM_VERSION_PATCH}")
+set(HYDE_CLANG_INTERNAL_INCLUDE_PATH "${CLANG_INSTALL_PREFIX}/lib/clang/${llvm_version}/include")
+set(HYDE_CLANG_INCLUDE_PATH "${CLANG_INSTALL_PREFIX}/include")
+configure_file(include/include_paths.hpp.in "${CMAKE_CURRENT_BINARY_DIR}/include/include_paths.hpp" @ONLY)
+
 #TODO: use target_source
 add_executable(hyde ${EMITTER_FILES} ${MATCHER_FILES} ${SRC_FILES})
-if (NOT LLVM_ENABLE_RTTI)
+if ((NOT LLVM_ENABLE_RTTI) AND
+	((${CMAKE_CXX_COMPILER_ID} MATCHES "GNU") OR
+	 (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")))
     target_compile_options (hyde PRIVATE -fno-rtti)
 endif()
 
-target_include_directories(hyde PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(hyde PRIVATE
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}/include
+	${CMAKE_CURRENT_BINARY_DIR}/include)
 
 target_link_libraries(hyde
 	                  yaml-cpp
@@ -41,3 +51,8 @@ target_link_libraries(hyde
                       clangBasic
                       clangTooling
                       )
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/generate_test_files.sh.in"
+	"${CMAKE_CURRENT_BINARY_DIR}/generate_test_files.sh.configured" @ONLY)
+file(GENERATE OUTPUT generate_test_files.sh
+	          INPUT "${CMAKE_CURRENT_BINARY_DIR}/generate_test_files.sh.configured")
