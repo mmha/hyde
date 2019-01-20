@@ -6,7 +6,7 @@ NOTICE: Adobe permits you to use, modify, and distribute this file in
 accordance with the terms of the Adobe license agreement accompanying
 it. If you have received this file from a source other than Adobe,
 then your use, modification, or distribution of it requires the prior
-written permission of Adobe. 
+written permission of Adobe.
 */
 
 // identity
@@ -36,7 +36,8 @@ bool yaml_function_emitter::do_merge(const std::string& filepath,
             bool failure{false};
 
             failure |= check_scalar(filepath, have, expected, nodepath, out_merged, "description");
-            failure |= check_scalar(filepath, have, expected, nodepath, out_merged, "signature_with_names");
+            failure |= check_scalar(filepath, have, expected, nodepath, out_merged,
+                                    "signature_with_names");
             failure |= check_scalar(filepath, have, expected, nodepath, out_merged, "return");
             // failure |= check_scalar(filepath, have, expected, nodepath, out_merged,
             // "annotation");
@@ -90,7 +91,7 @@ bool yaml_function_emitter::emit(const json& j) {
 
         const std::string& key = static_cast<const std::string&>(overload["signature"]);
         overloads[key]["signature_with_names"] = overload["signature_with_names"];
-        overloads[key]["description"] = tag_value_missing_k;
+        overloads[key]["description"] = overload["description"];
         overloads[key]["return"] = tag_value_optional_k;
         maybe_annotate(overload, overloads[key]);
 
@@ -103,7 +104,7 @@ bool yaml_function_emitter::emit(const json& j) {
                 const bool unnamed = name.empty();
                 cur_arg["name"] = unnamed ? "unnamed-" + std::to_string(count) : name;
                 cur_arg["type"] = arg["type"];
-                cur_arg["description"] = tag_value_optional_k;
+                cur_arg["description"] = arg["description"];
                 if (unnamed) cur_arg["unnamed"] = true;
                 ++count;
             }

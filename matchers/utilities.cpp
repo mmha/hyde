@@ -22,6 +22,7 @@ written permission of Adobe.
 // clang
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Comment.h"
 #include "clang/AST/Type.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
@@ -276,6 +277,41 @@ std::string GetShortName(const clang::ASTContext* n, const clang::FunctionDecl* 
     return result;
 }
 
+std::string GetBrief(const clang::ASTContext* n, const Decl* d) {
+    auto const RC = n->getRawCommentForAnyRedecl(d);
+    if (!RC) {
+        return {};
+    }
+    return RC->getBriefText(*n);
+}
+
+llvm::DenseMap<clang::ParmVarDecl*, llvm::StringRef> GetParamDescriptions(
+    const clang::ASTContext* n, const clang::FunctionDecl* d) {
+    llvm::DenseMap<clang::ParmVarDecl*, llvm::StringRef> descriptions;
+    const auto FC = n->getCommentForDecl(d, nullptr);
+    if (!FC) {
+        return descriptions;
+    }
+
+    const auto description_for_param = [&](const auto parm) -> llvm::StringRef {
+        for (const auto BC : FC->getBlocks()) {
+            if (const auto PC = llvm::dyn_cast<clang::comments::ParamCommandComment>(BC)) {
+                if (PC->getParamNameAsWritten() == parm->getName()) {
+                    const auto paragraph = *PC->child_begin();
+                    const auto text = *paragraph->child_begin();
+                    return llvm::dyn_cast<clang::comments::TextComment>(text)->getText();
+                }
+            }
+        }
+        return {};
+    };
+
+    for (auto const parm : d->parameters()) {
+        descriptions[parm] = description_for_param(parm);
+    }
+    return descriptions;
+}
+
 /**************************************************************************************************/
 
 template <typename NodeType>
@@ -397,7 +433,8 @@ json GetTemplateParameters(const ASTContext* n, const clang::TemplateDecl* d) {
 
 /**************************************************************************************************/
 
-boost::optional<json> DetailFunctionDecl(const hyde::processing_options& options, const FunctionDecl* f) {
+boost::optional<json> DetailFunctionDecl(const hyde::processing_options& options,
+                                         const FunctionDecl* f) {
     auto info_opt = StandardDeclInfo(options, f);
     if (!info_opt) return info_opt;
     auto info = std::move(*info_opt);
@@ -411,6 +448,7 @@ boost::optional<json> DetailFunctionDecl(const hyde::processing_options& options
     // redo the name and qualified name for this entry, now that we have a proper function
     info["name"] = info["signature"];
     info["qualified_name"] = GetSignature(n, f, signature_options::fully_qualified);
+    info["description"] = GetBrief(n, f);
 
     if (f->isConstexpr()) info["constexpr"] = true;
 
@@ -456,11 +494,14 @@ boost::optional<json> DetailFunctionDecl(const hyde::processing_options& options
         info["template_parameters"] = GetTemplateParameters(n, template_decl);
     }
 
+    const auto param_descriptions = GetParamDescriptions(n, f);
+
     for (const auto& p : f->parameters()) {
         json argument = json::object();
 
         argument["type"] = to_string(p, p->getOriginalType());
         argument["name"] = p->getNameAsString();
+        argument["description"] = param_descriptions.lookup(p);
 
         info["arguments"].push_back(std::move(argument));
     }
@@ -560,8 +601,7 @@ std::string PostProcessTypeParameter(const clang::Decl* decl, std::string type) 
                 auto qualType = context.getTemplateTypeParmType(
                     depth, index, template_type->isParameterPack(), template_type);
 
-                std::string old_type =
-                    needle + std::to_string(depth) + "-" + std::to_string(index);
+                std::string old_type = needle + std::to_string(depth) + "-" + std::to_string(index);
                 std::string new_type = hyde::to_string(template_type, qualType);
                 parent_template_types.emplace_back(
                     std::make_pair(std::move(old_type), std::move(new_type)));
