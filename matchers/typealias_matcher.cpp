@@ -6,7 +6,7 @@ NOTICE: Adobe permits you to use, modify, and distribute this file in
 accordance with the terms of the Adobe license agreement accompanying
 it. If you have received this file from a source other than Adobe,
 then your use, modification, or distribution of it requires the prior
-written permission of Adobe. 
+written permission of Adobe.
 */
 
 // identity
@@ -44,6 +44,7 @@ void TypeAliasInfo::run(const MatchFinder::MatchResult& Result) {
     if (!info["parents"].empty()) return;
 
     info["type"] = hyde::to_string(node, node->getUnderlyingType());
+    info["description"] = GetBrief(node);
 
     if (auto template_decl = node->getDescribedAliasTemplate()) {
         info["template_parameters"] = GetTemplateParameters(Result.Context, template_decl);

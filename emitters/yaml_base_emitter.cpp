@@ -6,7 +6,7 @@ NOTICE: Adobe permits you to use, modify, and distribute this file in
 accordance with the terms of the Adobe license agreement accompanying
 it. If you have received this file from a source other than Adobe,
 then your use, modification, or distribution of it requires the prior
-written permission of Adobe. 
+written permission of Adobe.
 */
 
 // identity
@@ -209,7 +209,7 @@ void yaml_base_emitter::insert_typedefs(const json& j, json& node) {
             const std::string& key = type_def["name"];
             auto& type_node = node["typedefs"][key];
             type_node["definition"] = static_cast<const std::string&>(type_def["type"]);
-            type_node["description"] = tag_value_missing_k;
+            type_node["description"] = type_def["description"];
             maybe_annotate(type_def, type_node);
         }
     }
@@ -219,7 +219,7 @@ void yaml_base_emitter::insert_typedefs(const json& j, json& node) {
             const std::string& key = type_def["name"];
             auto& type_node = node["typedefs"][key];
             type_node["definition"] = static_cast<const std::string&>(type_def["type"]);
-            type_node["description"] = tag_value_missing_k;
+            type_node["description"] = type_def["description"];
             maybe_annotate(type_def, type_node);
         }
     }
@@ -298,8 +298,7 @@ bool yaml_base_emitter::check_scalar(const std::string& filepath,
     const std::string& have_scalar(have);
 
     if (expected_scalar == tag_value_missing_k) {
-        if (have_scalar != tag_value_missing_k)
-            return false;
+        if (have_scalar != tag_value_missing_k) return false;
 
         if (_mode == yaml_mode::validate) {
             notify("value not documented", "");
@@ -723,7 +722,6 @@ bool yaml_base_emitter::reconcile(json expected,
 
     return failure;
 }
-
 
 /**************************************************************************************************/
 

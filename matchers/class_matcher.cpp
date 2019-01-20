@@ -76,6 +76,7 @@ public:
             auto name = type["qualified_name"].get<std::string>();
             type["static"] = true;
             type["type"] = hyde::to_string(d, d->getType());
+            type["description"] = hyde::GetBrief(d);
             _static_members[name] = type;
         }
         return true;
@@ -154,6 +155,7 @@ void ClassInfo::run(const MatchFinder::MatchResult& Result) {
         if (!fieldInfo_opt) continue;
         auto fieldInfo = std::move(*fieldInfo_opt);
         fieldInfo["type"] = hyde::to_string(field, field->getType());
+        fieldInfo["description"] = hyde::GetBrief(field);
         info["fields"][static_cast<const std::string&>(fieldInfo["qualified_name"])] =
             fieldInfo; // can't move this into place for some reason.
     }
@@ -178,6 +180,7 @@ void ClassInfo::run(const MatchFinder::MatchResult& Result) {
         auto typedefInfo = std::move(*typedefInfo_opt);
 
         typedefInfo["type"] = hyde::to_string(type_def, type_def->getUnderlyingType());
+        typedefInfo["description"] = GetBrief(type_def);
 
         info["typedefs"].push_back(std::move(typedefInfo));
     }
@@ -193,6 +196,7 @@ void ClassInfo::run(const MatchFinder::MatchResult& Result) {
         auto typealiasInfo = std::move(*typealiasInfo_opt);
 
         typealiasInfo["type"] = hyde::to_string(type_alias, type_alias->getUnderlyingType());
+        typealiasInfo["description"] = GetBrief(type_alias);
         if (auto template_decl = type_alias->getDescribedAliasTemplate()) {
             typealiasInfo["template_parameters"] =
                 GetTemplateParameters(Result.Context, template_decl);

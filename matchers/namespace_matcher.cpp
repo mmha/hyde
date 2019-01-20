@@ -6,7 +6,7 @@ NOTICE: Adobe permits you to use, modify, and distribute this file in
 accordance with the terms of the Adobe license agreement accompanying
 it. If you have received this file from a source other than Adobe,
 then your use, modification, or distribution of it requires the prior
-written permission of Adobe. 
+written permission of Adobe.
 */
 
 // identity
@@ -38,6 +38,8 @@ void NamespaceInfo::run(const MatchFinder::MatchResult& Result) {
     auto info_opt = StandardDeclInfo(_options, ns);
     if (!info_opt) return;
     auto info = std::move(*info_opt);
+
+    info["brief"] = GetBrief(ns);
 
     _j["namespaces"].push_back(std::move(info));
 }

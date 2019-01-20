@@ -101,7 +101,7 @@ bool yaml_class_emitter::emit(const json& j) {
             const std::string& key = field["name"];
             auto& field_node = node["fields"][key];
             field_node["type"] = static_cast<const std::string&>(field["type"]);
-            field_node["description"] = tag_value_missing_k;
+            field_node["description"] = field["description"];
             maybe_annotate(field, field_node);
         }
     }
