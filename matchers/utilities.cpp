@@ -277,41 +277,6 @@ std::string GetShortName(const clang::ASTContext* n, const clang::FunctionDecl* 
     return result;
 }
 
-std::string GetBrief(const clang::ASTContext* n, const Decl* d) {
-    auto const RC = n->getRawCommentForAnyRedecl(d);
-    if (!RC) {
-        return {};
-    }
-    return RC->getBriefText(*n);
-}
-
-llvm::DenseMap<clang::ParmVarDecl*, llvm::StringRef> GetParamDescriptions(
-    const clang::ASTContext* n, const clang::FunctionDecl* d) {
-    llvm::DenseMap<clang::ParmVarDecl*, llvm::StringRef> descriptions;
-    const auto FC = n->getCommentForDecl(d, nullptr);
-    if (!FC) {
-        return descriptions;
-    }
-
-    const auto description_for_param = [&](const auto parm) -> llvm::StringRef {
-        for (const auto BC : FC->getBlocks()) {
-            if (const auto PC = llvm::dyn_cast<clang::comments::ParamCommandComment>(BC)) {
-                if (PC->getParamNameAsWritten() == parm->getName()) {
-                    const auto paragraph = *PC->child_begin();
-                    const auto text = *paragraph->child_begin();
-                    return llvm::dyn_cast<clang::comments::TextComment>(text)->getText();
-                }
-            }
-        }
-        return {};
-    };
-
-    for (auto const parm : d->parameters()) {
-        descriptions[parm] = description_for_param(parm);
-    }
-    return descriptions;
-}
-
 /**************************************************************************************************/
 
 template <typename NodeType>
@@ -381,6 +346,9 @@ boost::optional<json> DetailCXXRecordDecl(const hyde::processing_options& option
     auto info_opt = StandardDeclInfo(options, cxx);
     if (!info_opt) return info_opt;
     auto info = std::move(*info_opt);
+    const clang::ASTContext* n = &cxx->getASTContext();
+
+    info["brief"] = GetBrief(cxx);
 
     // overrides for various fields if the record is of a specific sub-type.
     if (auto s = llvm::dyn_cast_or_null<ClassTemplateSpecializationDecl>(cxx)) {
@@ -448,7 +416,7 @@ boost::optional<json> DetailFunctionDecl(const hyde::processing_options& options
     // redo the name and qualified name for this entry, now that we have a proper function
     info["name"] = info["signature"];
     info["qualified_name"] = GetSignature(n, f, signature_options::fully_qualified);
-    info["description"] = GetBrief(n, f);
+    info["description"] = GetBrief(f);
 
     if (f->isConstexpr()) info["constexpr"] = true;
 
@@ -494,7 +462,7 @@ boost::optional<json> DetailFunctionDecl(const hyde::processing_options& options
         info["template_parameters"] = GetTemplateParameters(n, template_decl);
     }
 
-    const auto param_descriptions = GetParamDescriptions(n, f);
+    const auto param_descriptions = GetParamDescriptions(f);
 
     for (const auto& p : f->parameters()) {
         json argument = json::object();
@@ -673,6 +641,47 @@ std::string PostProcessType(const clang::Decl* decl, std::string type) {
     std::string result = PostProcessTypeParameter(decl, std::move(type));
     result = PostProcessSpacing(std::move(result));
     return result;
+}
+
+/**************************************************************************************************/
+
+std::string GetBrief(const Decl* d) {
+    const auto& n = d->getASTContext();
+    auto const RC = n.getRawCommentForAnyRedecl(d);
+    if (!RC) {
+        return {};
+    }
+    return RC->getBriefText(n);
+}
+
+/**************************************************************************************************/
+
+llvm::DenseMap<clang::ParmVarDecl*, llvm::StringRef> GetParamDescriptions(
+    const clang::FunctionDecl* d) {
+    const auto& n = d->getASTContext();
+    llvm::DenseMap<clang::ParmVarDecl*, llvm::StringRef> descriptions;
+    const auto FC = n.getCommentForDecl(d, nullptr);
+    if (!FC) {
+        return descriptions;
+    }
+
+    const auto description_for_param = [&](const auto parm) -> llvm::StringRef {
+        for (const auto BC : FC->getBlocks()) {
+            if (const auto PC = llvm::dyn_cast<clang::comments::ParamCommandComment>(BC)) {
+                if (PC->getParamNameAsWritten() == parm->getName()) {
+                    const auto paragraph = *PC->child_begin();
+                    const auto text = *paragraph->child_begin();
+                    return llvm::dyn_cast<clang::comments::TextComment>(text)->getText();
+                }
+            }
+        }
+        return {};
+    };
+
+    for (auto const parm : d->parameters()) {
+        descriptions[parm] = description_for_param(parm);
+    }
+    return descriptions;
 }
 
 /**************************************************************************************************/

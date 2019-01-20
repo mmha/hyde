@@ -6,7 +6,7 @@ NOTICE: Adobe permits you to use, modify, and distribute this file in
 accordance with the terms of the Adobe license agreement accompanying
 it. If you have received this file from a source other than Adobe,
 then your use, modification, or distribution of it requires the prior
-written permission of Adobe. 
+written permission of Adobe.
 */
 
 // identity
@@ -88,6 +88,7 @@ bool yaml_class_emitter::emit(const json& j) {
                               static_cast<const std::string&>(j["kind"]) + " " +
                               static_cast<const std::string&>(j["qualified_name"]) + ";";
     node["declaration"] = std::move(declaration);
+    node["brief"] = j["brief"];
 
     for (const auto& ns : j["namespaces"])
         node["namespace"].push_back(static_cast<const std::string&>(ns));
@@ -107,8 +108,7 @@ bool yaml_class_emitter::emit(const json& j) {
 
     insert_typedefs(j, node);
 
-    auto dst = dst_path(j,
-                        static_cast<const std::string&>(j["name"]));
+    auto dst = dst_path(j, static_cast<const std::string&>(j["name"]));
 
     bool failure = reconcile(std::move(node), _dst_root, std::move(dst) / index_filename_k);
 

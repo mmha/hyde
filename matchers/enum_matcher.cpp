@@ -6,7 +6,7 @@ NOTICE: Adobe permits you to use, modify, and distribute this file in
 accordance with the terms of the Adobe license agreement accompanying
 it. If you have received this file from a source other than Adobe,
 then your use, modification, or distribution of it requires the prior
-written permission of Adobe. 
+written permission of Adobe.
 */
 
 // identity
@@ -39,15 +39,17 @@ void EnumInfo::run(const MatchFinder::MatchResult& Result) {
     if (!info_opt) return;
     auto info = std::move(*info_opt);
 
-    //info["scoped"] = enumeration->isScoped();
-    //info["fixed"] = enumeration->isFixed();
+    // info["scoped"] = enumeration->isScoped();
+    // info["fixed"] = enumeration->isFixed();
     info["type"] = hyde::to_string(enumeration, enumeration->getIntegerType());
     info["values"] = json::array();
+    info["brief"] = hyde::GetBrief(enumeration);
 
-    for (const auto& p : enumeration->enumerators()) {
+    for (const auto p : enumeration->enumerators()) {
         json enumerator = json::object();
 
         enumerator["name"] = p->getNameAsString();
+        enumerator["description"] = hyde::GetBrief(p);
 
         info["values"].push_back(std::move(enumerator));
     }

@@ -6,7 +6,7 @@ NOTICE: Adobe permits you to use, modify, and distribute this file in
 accordance with the terms of the Adobe license agreement accompanying
 it. If you have received this file from a source other than Adobe,
 then your use, modification, or distribution of it requires the prior
-written permission of Adobe. 
+written permission of Adobe.
 */
 
 // identity
@@ -53,12 +53,13 @@ bool yaml_enum_emitter::emit(const json& j) {
 
     json node = base_emitter_node("enumeration", j["name"], "enumeration");
     node["defined-in-file"] = defined_in_file(j["defined-in-file"], _src_root);
+    node["brief"] = j["brief"];
     maybe_annotate(j, node);
 
     for (const auto& value : j["values"]) {
         json cur_value;
         cur_value["name"] = value["name"];
-        cur_value["description"] = tag_value_missing_k;
+        cur_value["description"] = value["description"];
         node["values"].push_back(std::move(cur_value));
     }
 

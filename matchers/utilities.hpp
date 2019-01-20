@@ -55,6 +55,11 @@ std::string GetArgumentList(const llvm::ArrayRef<clang::NamedDecl*> args);
 // type-parameter-N-M filtering.
 std::string PostProcessType(const clang::Decl* decl, std::string type);
 
+std::string GetBrief(const clang::Decl* d);
+
+llvm::DenseMap<clang::ParmVarDecl*, llvm::StringRef> GetParamDescriptions(
+    const clang::FunctionDecl* d);
+
 /**************************************************************************************************/
 
 inline std::string to_string(clang::AccessSpecifier access) {
