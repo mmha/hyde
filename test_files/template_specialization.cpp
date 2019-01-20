@@ -6,7 +6,7 @@ NOTICE: Adobe permits you to use, modify, and distribute this file in
 accordance with the terms of the Adobe license agreement accompanying
 it. If you have received this file from a source other than Adobe,
 then your use, modification, or distribution of it requires the prior
-written permission of Adobe. 
+written permission of Adobe.
 */
 
 // AST dump with
@@ -45,14 +45,10 @@ struct foo<bool, int> {
 template <typename T>
 struct bar {
     template <typename U>
-    static void func() {
-
-    }
+    static void func() {}
 
     template <>
-    static void func<double>() {
-
-    }
+    static void func<double>() {}
 };
 
 /**************************************************************************************************/

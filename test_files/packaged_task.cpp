@@ -57,13 +57,12 @@ class packaged_task {
     explicit packaged_task(ptr_t p) : _p(std::move(p)) {}
 
     template <typename Signature, typename E, typename F>
-    friend auto package(E, F&&) -> std::pair<detail::packaged_task_from_signature_t<Signature>,
-                                              int>;
+    friend auto package(E, F &&)
+        -> std::pair<detail::packaged_task_from_signature_t<Signature>, int>;
 
     template <typename Signature, typename E, typename F>
-    friend auto package_with_broken_promise(E, F&&)
-        -> std::pair<detail::packaged_task_from_signature_t<Signature>,
-                     int>;
+    friend auto package_with_broken_promise(E, F &&)
+        -> std::pair<detail::packaged_task_from_signature_t<Signature>, int>;
 
 public:
     packaged_task() = default;
