@@ -7,3 +7,4 @@ docs/_site/
 docs/Gemfile.lock
 docs/libraries
 !docs/libraries/index.md
+CMakeLists.txt.user*
