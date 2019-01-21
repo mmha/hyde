@@ -92,7 +92,7 @@ bool yaml_function_emitter::emit(const json& j) {
         const std::string& key = static_cast<const std::string&>(overload["signature"]);
         overloads[key]["signature_with_names"] = overload["signature_with_names"];
         overloads[key]["description"] = overload["description"];
-        overloads[key]["return"] = tag_value_optional_k;
+        overloads[key]["return"] = overload["return"];
         maybe_annotate(overload, overloads[key]);
 
         if (!overload["arguments"].empty()) {

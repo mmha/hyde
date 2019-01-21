@@ -321,6 +321,29 @@ hyde::json GetParents(const ASTContext* n, const Decl* d) {
 
 /**************************************************************************************************/
 
+std::string GetReturnDescription(const clang::FunctionDecl* d) {
+    const auto& n = d->getASTContext();
+    const auto FC = n.getCommentForDecl(d, nullptr);
+    if (!FC) {
+        return {};
+    }
+    const auto Blocks = FC->getBlocks();
+    const auto return_comment = llvm::find_if(Blocks, [&](const auto BC) {
+        const auto BCC = llvm::dyn_cast<clang::comments::BlockCommandComment>(BC);
+        if (!BCC) {
+            return false;
+        }
+        const auto CommandName = BCC->getCommandName(n.getCommentCommandTraits());
+        return CommandName == "return" || CommandName == "returns";
+    });
+    if (return_comment == Blocks.end()) {
+        return {};
+    }
+    const auto paragraph = (*return_comment)->child_begin();
+    const auto text = (*paragraph)->child_begin();
+    return llvm::dyn_cast<clang::comments::TextComment>(*text)->getText();
+}
+
 } // namespace
 
 /**************************************************************************************************/
@@ -417,6 +440,7 @@ boost::optional<json> DetailFunctionDecl(const hyde::processing_options& options
     info["name"] = info["signature"];
     info["qualified_name"] = GetSignature(n, f, signature_options::fully_qualified);
     info["description"] = GetBrief(f);
+    info["return"] = GetReturnDescription(f);
 
     if (f->isConstexpr()) info["constexpr"] = true;
 
