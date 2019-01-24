@@ -321,7 +321,7 @@ hyde::json GetParents(const ASTContext* n, const Decl* d) {
 
 /**************************************************************************************************/
 
-std::string GetReturnDescription(const clang::FunctionDecl* d) {
+llvm::StringRef GetReturnDescription(const clang::FunctionDecl* d) {
     const auto& n = d->getASTContext();
     const auto FC = n.getCommentForDecl(d, nullptr);
     if (!FC) {
@@ -391,8 +391,12 @@ boost::optional<json> DetailCXXRecordDecl(const hyde::processing_options& option
 json GetTemplateParameters(const ASTContext* n, const clang::TemplateDecl* d) {
     json result = json::array();
 
+    const auto param_descriptions = GetTemplateParmDescription(d);
+
     for (const auto& parameter_decl : *d->getTemplateParameters()) {
         json parameter_info = json::object();
+
+        parameter_info["description"] = param_descriptions.lookup(parameter_decl);
 
         if (const auto& template_type = dyn_cast<TemplateTypeParmDecl>(parameter_decl)) {
             parameter_info["type"] =
@@ -703,6 +707,34 @@ llvm::DenseMap<clang::ParmVarDecl*, llvm::StringRef> GetParamDescriptions(
     };
 
     for (auto const parm : d->parameters()) {
+        descriptions[parm] = description_for_param(parm);
+    }
+    return descriptions;
+}
+
+llvm::DenseMap<clang::NamedDecl*, llvm::StringRef> GetTemplateParmDescription(
+    const clang::TemplateDecl* d) {
+    const auto& n = d->getASTContext();
+    llvm::DenseMap<clang::NamedDecl*, llvm::StringRef> descriptions;
+    const auto FC = n.getCommentForDecl(d, nullptr);
+    if (!FC) {
+        return descriptions;
+    }
+
+    const auto description_for_param = [&](const auto parm) -> llvm::StringRef {
+        for (const auto BC : FC->getBlocks()) {
+            if (const auto PC = llvm::dyn_cast<clang::comments::TParamCommandComment>(BC)) {
+                if (PC->getParamNameAsWritten() == parm->getName()) {
+                    const auto paragraph = *PC->child_begin();
+                    const auto text = *paragraph->child_begin();
+                    return llvm::dyn_cast<clang::comments::TextComment>(text)->getText();
+                }
+            }
+        }
+        return {};
+    };
+
+    for (auto const parm : *d->getTemplateParameters()) {
         descriptions[parm] = description_for_param(parm);
     }
     return descriptions;

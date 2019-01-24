@@ -59,6 +59,8 @@ std::string GetBrief(const clang::Decl* d);
 
 llvm::DenseMap<clang::ParmVarDecl*, llvm::StringRef> GetParamDescriptions(
     const clang::FunctionDecl* d);
+llvm::DenseMap<clang::NamedDecl*, llvm::StringRef> GetTemplateParmDescription(
+    const clang::TemplateDecl* d);
 
 /**************************************************************************************************/
 
